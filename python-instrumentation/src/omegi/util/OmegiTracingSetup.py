@@ -6,9 +6,9 @@ import os
 from omegi.decorator.OmegiDecorator import omegi_decorator
 
 
-def wrap_functions(tracer):
+def wrap_functions(tracer, project_root):
     logging.info("[OMEGIUTIL] wrap_functions: STARTED")
-    for module_name in _get_project_modules(_find_project_root()):
+    for module_name in _get_project_modules(project_root):
         module = importlib.import_module(module_name)
         wrapped_functions = set()
         for name, obj in inspect.getmembers(module):
@@ -19,20 +19,6 @@ def wrap_functions(tracer):
                     wrapped = decorator(obj)
                     setattr(module, name, wrapped)
                     wrapped_functions.add(obj)
-
-
-def _find_project_root():
-    logging.info("[OMEGIUTIL] _find_project_root: STARTED")
-    current_path = os.path.abspath(__file__)
-    while True:
-        if os.path.exists(os.path.join(current_path, 'requirements.txt')) or os.path.exists(os.path.join(current_path, 'setup.py')):
-            return current_path
-        parent_path = os.path.dirname(current_path)
-        if parent_path == current_path:
-            raise Exception("Project root not found.")
-        current_path = parent_path
-    logging.info(f"[OMEGIUTIL] _find_project_root: ENDED -> {current_path}")
-    return current_path
 
 
 def _get_project_modules(project_root):

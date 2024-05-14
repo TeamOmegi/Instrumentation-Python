@@ -2,6 +2,7 @@ import json
 import os
 from typing import Sequence
 
+from kafka import KafkaProducer
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.trace import Span, StatusCode
 
@@ -17,7 +18,7 @@ class OmegiKafkaSpanExporter(SpanExporter):
         self.flow_topic = os.environ.get('OMEGI_KAFKA_TOPIC_FLOW', 'flow')
         self.token = os.environ.get('OMEGI_TOKEN', "your_token")
         self.flow_rate = 1 / int(os.environ.get('OMEGI_FLOW_RATE', 5))
-        # self.producer = KafkaProducer(bootstrap_servers=kafka_servers)
+        self.producer = KafkaProducer(bootstrap_servers=self.kafka_servers)
 
     def export(self, spans: Sequence[Span]):
         self._process_sampler_spans(spans)
