@@ -1,6 +1,7 @@
+import logging
 from typing import Sequence
 
-from opentelemetry.trace import Span
+from opentelemetry.trace import Span, SpanKind, format_span_id, format_trace_id
 
 from .UtilFunction import convert_nanoseconds_to_string
 
@@ -10,28 +11,34 @@ def format_error_spans(origin_spans: Sequence[Span], token):
     error = {}
     spans = []
     for idx, origin_span in enumerate(origin_spans):
-        # 마지막 Span의 경우, error 부분을 파싱해 저장
-        if idx == len(origin_spans) - 1:
-            error["exception.type"] = origin_span.events[0].attributes["exception.type"]
-            error["exception.message"] = origin_span.events[0].attributes["exception.message"]
-            error["exception.flow"] = _extract_exception_flow(origin_span.events[0].attributes["exception.stacktrace"])
         spans.append({
           "name": origin_span.name,
-          "spanId": origin_span.get_span_context().span_id,
-          'parent_span_id': origin_span.parent.span_id if origin_span.parent else '0000000000000000',
+          "spanId": format_span_id(origin_span.get_span_context().span_id),
+          'parentSpanId': format_span_id(origin_span.parent.span_id) if origin_span.parent else '0000000000000000',
           "kind": origin_span.kind.name,
-          "span enter-time": convert_nanoseconds_to_string(origin_span.start_time),
-          "span exit-time": convert_nanoseconds_to_string(origin_span.end_time),
+          "spanEnterTime": convert_nanoseconds_to_string(origin_span.start_time),
+          "spanExitTime": convert_nanoseconds_to_string(origin_span.end_time),
           "attributes": {str(k): str(v) for k, v in origin_span.attributes.items()}
         })
+    if _figure_internal_error(origin_spans):
+        error["exception.type"] = origin_spans[len(origin_spans)-1].events[0].attributes["exception.type"]
+        error["exception.message"] = origin_spans[len(origin_spans)-1].events[0].attributes["exception.message"]
+        error["exception.flow"] = _extract_exception_flow(origin_spans[len(origin_spans)-1].events[0].attributes["exception.stacktrace"])
+        error["exception.stacktrace"] = origin_spans[len(origin_spans)-1].events[0].attributes["exception.stacktrace"]
 
     data["tracer"] = "omegi-tracer-python"
-    data["traceId"] = origin_spans[0].get_span_context().trace_id
+    data["traceId"] = format_trace_id(origin_spans[0].get_span_context().trace_id)
     data["token"] = token
     data["serviceName"] = origin_spans[0].resource.attributes["service.name"]
     data["error"] = error
     data["spans"] = spans
     return data
+
+
+def _figure_internal_error(origin_spans: Sequence[Span]) -> bool:
+    if origin_spans[0].kind.name == 'CLIENT':
+        return False
+    return True
 
 
 def _extract_exception_flow(stack_trace):
@@ -54,4 +61,3 @@ def _extract_exception_flow(stack_trace):
     for idx, error in enumerate(error_stack, start=1):
         flow_steps[f'step.{idx}'] = error
     return {"exception.flow": flow_steps}
-

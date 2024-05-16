@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 from typing import Sequence
 
 from kafka import KafkaProducer
@@ -27,7 +28,7 @@ class OmegiKafkaSpanExporter(SpanExporter):
     def _process_sampler_spans(self, spans: Sequence[Span]):
         if decide_export(spans[0].get_span_context().trace_id, rate=self.flow_rate):
             processed_trace = format_sampler_spans(spans, self.token)
-            print(processed_trace, flush=True)
+            logging.info(f'[OmegiKafkaSpanExporter] _process_sampler_spans -> {processed_trace}')
             self._send_to_kafka(processed_trace, self.flow_topic)
 
     def _process_error_spans(self, spans: Sequence[Span]):
@@ -38,7 +39,7 @@ class OmegiKafkaSpanExporter(SpanExporter):
                 break
         if is_error:
             processed_trace = format_error_spans(spans, self.token)
-            print(processed_trace, flush=True)
+            logging.info(f'[OmegiKafkaSpanExporter] _process_error_spans -> {processed_trace}')
             self._send_to_kafka(processed_trace, self.error_topic)
 
     def _send_to_kafka(self, data, topic):

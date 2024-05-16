@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="omegi-instrumentation-python",
-    version="0.0.1",
+    version="0.0.8",
     author="omegi",
     author_email="canon1107@naver.com",
     description="Python Instrumentation for Automatic Error Logging",
@@ -47,6 +47,7 @@ setuptools.setup(
         "opentelemetry-instrumentation-dbapi==0.45b0",
         "opentelemetry-instrumentation-django==0.45b0",
         "opentelemetry-instrumentation-elasticsearch==0.45b0",
+        "opentelemetry-instrumentation-requests==0.45b0",
         "opentelemetry-instrumentation-fastapi==0.45b0",
         "opentelemetry-instrumentation-flask==0.45b0",
         "opentelemetry-instrumentation-mysql==0.45b0",

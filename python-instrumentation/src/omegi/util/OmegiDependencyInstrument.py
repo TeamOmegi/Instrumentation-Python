@@ -8,7 +8,8 @@ def instrument_dependencies(app):
         _instrument_fastapi,
         _instrument_flask,
         _instrument_mysql,
-        _instrument_elasticsearch
+        _instrument_elasticsearch,
+        _instrument_requests
     ]
     for instrument_function in instrument_functions:
         try:
@@ -53,3 +54,9 @@ def _instrument_elasticsearch(app):
     if _is_library_installed('elasticsearch'):
         from opentelemetry.instrumentation.elasticsearch import ElasticsearchInstrumentor
         ElasticsearchInstrumentor().instrument()
+
+
+def _instrument_requests(app):
+    if _is_library_installed('requests'):
+        from opentelemetry.instrumentation.requests import RequestsInstrumentor
+        RequestsInstrumentor().instrument()

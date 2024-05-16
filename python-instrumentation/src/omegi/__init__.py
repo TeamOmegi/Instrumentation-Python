@@ -2,12 +2,13 @@ import logging
 import os
 from typing import Collection
 
-from opentelemetry import trace
+from opentelemetry import trace, propagate
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from .exporter.OmegiSpanExporter import OmegiKafkaSpanExporter
 from .util.OmegiDependencyInstrument import instrument_dependencies
@@ -39,10 +40,12 @@ class OmegiInstrumentor(BaseInstrumentor):
         """
         if self.project_root is None:
             logging.error("Please set Project root")
-        # Setup Custom Exporter, SpanProcessor
+        # Setup Propagator, Custom Exporter, SpanProcessor
+        propagator = TraceContextTextMapPropagator()
+        propagate.set_global_textmap(propagator)
         span_processor = BatchSpanProcessor(self._set_exporter())
         trace.set_tracer_provider(TracerProvider(
-            resource=Resource.create({"service.name": os.getenv("OMEGI_SERVICE_NAME", 'test-server')}),
+            resource=Resource.create({"service.name": os.getenv("OMEGI_SERVICE_NAME", 'test-server')})
         ))
         trace.get_tracer_provider().add_span_processor(span_processor)
         tracer = trace.get_tracer(__name__)
