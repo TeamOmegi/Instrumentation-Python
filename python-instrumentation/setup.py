@@ -4,17 +4,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="omegi-python-instrumentation",
-    version="0.1.5",
-    author="Omegi",
+    name="omegi-instrumentation-python",
+    version="0.0.1",
+    author="omegi",
     author_email="canon1107@naver.com",
     description="Python Instrumentation for Automatic Error Logging",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/TeamOmegi/Instrumentation-Python",
-    project_urls={
-        "Source Code": "https://github.com/TeamOmegi/Instrumentation-Python",
-    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",

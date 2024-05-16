@@ -7,7 +7,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 
 from .exporter.OmegiSpanExporter import OmegiKafkaSpanExporter
 from .util.OmegiDependencyInstrument import instrument_dependencies
@@ -40,21 +40,30 @@ class OmegiInstrumentor(BaseInstrumentor):
         if self.project_root is None:
             logging.error("Please set Project root")
         # Setup Custom Exporter, SpanProcessor
-        custom_exporter = OmegiKafkaSpanExporter()
-        span_processor = BatchSpanProcessor(custom_exporter)
+        span_processor = BatchSpanProcessor(self._set_exporter())
         trace.set_tracer_provider(TracerProvider(
-            resource=Resource.create({"service.name": os.getenv("OMEGI_SERVICE_NAME")}),
+            resource=Resource.create({"service.name": os.getenv("OMEGI_SERVICE_NAME", 'test-server')}),
         ))
         trace.get_tracer_provider().add_span_processor(span_processor)
         tracer = trace.get_tracer(__name__)
-        # Setup Instrumentations
+        # Setup Instrumentation
         if self.app is not None:
-            self._start_depending_instumentation(app=self.app)
+            self._start_depending_instrumentation(app=self.app)
         # Setup Tracing Functions
         wrap_functions(tracer, self.project_root)
 
     def _uninstrument(self, **kwargs):
         return unwrap(kwargs)
 
-    def _start_depending_instumentation(self, app):
+    def _start_depending_instrumentation(self, app):
         instrument_dependencies(self.app)
+
+    def _set_exporter(self):
+        exporter_kind = os.environ.get("OMEGI_EXPORTER_KIND", "kafka")
+        if exporter_kind == 'kafka':
+            return OmegiKafkaSpanExporter()
+        elif exporter_kind == 'console':
+            return ConsoleSpanExporter()
+        else:
+            return ConsoleSpanExporter()
+

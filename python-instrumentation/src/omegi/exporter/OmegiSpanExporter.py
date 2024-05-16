@@ -13,7 +13,7 @@ from omegi.util.UtilFunction import decide_export
 
 class OmegiKafkaSpanExporter(SpanExporter):
     def __init__(self):
-        self.kafka_servers = os.environ.get('OMEGI_KAFKA_CONFIG', 'localhost:9092').split(',')
+        self.kafka_servers = os.environ.get('OMEGI_KAFKA_SERVER', 'localhost:9092').split(',')
         self.error_topic = os.environ.get('OMEGI_KAFKA_TOPIC_ERROR', 'error')
         self.flow_topic = os.environ.get('OMEGI_KAFKA_TOPIC_FLOW', 'flow')
         self.token = os.environ.get('OMEGI_TOKEN', "your_token")
@@ -43,7 +43,7 @@ class OmegiKafkaSpanExporter(SpanExporter):
 
     def _send_to_kafka(self, data, topic):
         message = json.dumps(data).encode('utf-8')
-        # self.producer.send(topic, message)
+        self.producer.send(topic, message)
 
     def shutdown(self):
         self.producer.flush()
